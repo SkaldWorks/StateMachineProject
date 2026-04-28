@@ -168,12 +168,12 @@ Entities:
       targetTag: Red
       detectionRange: 20
       bodyColliderSize: [1, 1, 1]
-      moveSpeed: 3.4
+      moveSpeed: 4
       hammerRestDegrees: 140
       hammerSwingDegrees: -120
-      attackRange: 2.2
+      attackRange: 2.25
       attackDuration: 0.75
-      attackDamageTime: 0.24
+      attackDamageTime: 0.25
       maxHealth: 40
       logStateChanges: true
       hammerVisual: 11979571633178964622
@@ -183,7 +183,7 @@ Entities:
       hitSfxPath2:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
-      hitSfxVolume: 0.1
+      hitSfxVolume: 1
       deathEffectPrefab: 1932126691914227009
   - Entity: 920101
     Name: Blue Hammer Handle
@@ -244,17 +244,22 @@ Entities:
       color: [0.93, 0.32, 0.3, 1]
       ModelAsset:
         uuid: 17154083321347000101
+    AICombat::BigBrawlerStateMachine:
+      targetTag: Blue
+      detectionRange: 20
+      bodyColliderSize: [1, 1, 1]
+      maxHealth: 80
     AICombat::BrawlerStateMachine:
       targetTag: Blue
       detectionRange: 20
       bodyColliderSize: [1, 1, 1]
-      moveSpeed: 3.4
+      moveSpeed: 2
       hammerRestDegrees: 140
       hammerSwingDegrees: -120
-      attackRange: 2.2
+      attackRange: 2.25
       attackDuration: 0.75
-      attackDamageTime: 0.24
-      maxHealth: 40
+      attackDamageTime: 0.25
+      maxHealth: 80
       logStateChanges: true
       hammerVisual: 17922756738381035608
       hitSfxPath1:
@@ -263,7 +268,7 @@ Entities:
       hitSfxPath2:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
-      hitSfxVolume: 0.1
+      hitSfxVolume: 1
       deathEffectPrefab: 1932126691914227009
   - Entity: 17922756738381035608
     Name: Right Hand Root

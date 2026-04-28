@@ -9,9 +9,16 @@ Entities:
       position: [0, 0]
       size: [32, 32]
       scale: [1, 1]
+      anchorMin: [0.5, 0.5]
+      anchorMax: [0.5, 0.5]
+      pivot: [0.5, 0.5]
       originOffset: [0, 0]
       depth: 0
       rotation: 0
+      rotationOriginOffset: [0, 0]
+      parent: 0
+      children:
+        []
     Canis::Camera2D:
       position: [0, 0]
       scale: 1
