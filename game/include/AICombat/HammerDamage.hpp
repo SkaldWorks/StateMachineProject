@@ -6,7 +6,7 @@
 
 namespace AICombat
 {
-    class BrawlerStateMachine;
+    class StateMachine;
 
     class HammerDamage : public Canis::ScriptableEntity
     {
@@ -18,7 +18,8 @@ namespace AICombat
         int damage = 10;
         std::string targetTag = "";
 
-        explicit HammerDamage(Canis::Entity& _entity) : Canis::ScriptableEntity(_entity) {}
+        explicit HammerDamage(Canis::Entity& _entity) :
+            Canis::ScriptableEntity(_entity) {}
 
         void Create() override;
         void Ready() override;
@@ -27,7 +28,7 @@ namespace AICombat
         void CheckSensorEnter();
 
     private:
-        BrawlerStateMachine* GetOwnerStateMachine();
+        StateMachine* GetOwnerStateMachine();
         Canis::Entity* FindOwnerFromHierarchy() const;
         bool HasDamagedThisSwing(Canis::Entity& _target) const;
 

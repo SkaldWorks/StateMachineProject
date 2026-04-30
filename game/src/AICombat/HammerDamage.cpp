@@ -1,6 +1,6 @@
 #include <AICombat/HammerDamage.hpp>
 
-#include <AICombat/BrawlerStateMachine.hpp>
+#include <AICombat/StateMachine.hpp>
 
 #include <Canis/App.hpp>
 #include <Canis/ConfigHelper.hpp>
@@ -57,7 +57,7 @@ namespace AICombat
 
         if (targetTag.empty())
         {
-            if (BrawlerStateMachine* ownerStateMachine = GetOwnerStateMachine())
+            if (StateMachine* ownerStateMachine = GetOwnerStateMachine())
                 targetTag = ownerStateMachine->targetTag;
         }
     }
@@ -72,16 +72,20 @@ namespace AICombat
         if (!entity.HasComponents<Canis::BoxCollider, Canis::Rigidbody>())
             return;
 
-        BrawlerStateMachine* ownerStateMachine = GetOwnerStateMachine();
+        StateMachine* ownerStateMachine = GetOwnerStateMachine();
+
         if (ownerStateMachine == nullptr || !ownerStateMachine->IsAlive())
         {
             m_hitTargetsThisSwing.clear();
             return;
         }
 
+        const std::string currentState = ownerStateMachine->GetCurrentStateName();
+
         const bool damageWindowOpen =
-            ownerStateMachine->GetCurrentStateName() == HammerTimeState::Name &&
-            ownerStateMachine->GetStateTime() >= ownerStateMachine->hammerTimeState.attackDamageTime;
+            (currentState == "HammerTimeState" ||
+             currentState == "BigHammerTimeState") &&
+            ownerStateMachine->GetStateTime() >= 0.25f;
 
         if (!damageWindowOpen)
         {
@@ -89,14 +93,25 @@ namespace AICombat
             return;
         }
 
-        for (Canis::Entity* other : entity.GetComponent<Canis::BoxCollider>().entered)
+        for (Canis::Entity* other :
+            entity.GetComponent<Canis::BoxCollider>().entered)
         {
-            if (other == nullptr || !other->active || other == owner || HasDamagedThisSwing(*other))
+            if (other == nullptr ||
+                !other->active ||
+                other == owner ||
+                HasDamagedThisSwing(*other))
+            {
                 continue;
+            }
 
-            BrawlerStateMachine* targetStateMachine = other->GetScript<BrawlerStateMachine>();
-            if (targetStateMachine == nullptr || !targetStateMachine->IsAlive())
+            StateMachine* targetStateMachine =
+                other->GetScript<StateMachine>();
+
+            if (targetStateMachine == nullptr ||
+                !targetStateMachine->IsAlive())
+            {
                 continue;
+            }
 
             if (other->tag != targetTag)
                 continue;
@@ -106,7 +121,7 @@ namespace AICombat
         }
     }
 
-    BrawlerStateMachine* HammerDamage::GetOwnerStateMachine()
+    StateMachine* HammerDamage::GetOwnerStateMachine()
     {
         if (owner == nullptr)
             owner = FindOwnerFromHierarchy();
@@ -114,7 +129,7 @@ namespace AICombat
         if (owner == nullptr || !owner->active)
             return nullptr;
 
-        return owner->GetScript<BrawlerStateMachine>();
+        return owner->GetScript<StateMachine>();
     }
 
     Canis::Entity* HammerDamage::FindOwnerFromHierarchy() const
@@ -122,16 +137,19 @@ namespace AICombat
         if (!entity.HasComponent<Canis::Transform>())
             return nullptr;
 
-        Canis::Entity* current = entity.GetComponent<Canis::Transform>().parent;
+        Canis::Entity* current =
+            entity.GetComponent<Canis::Transform>().parent;
+
         while (current != nullptr)
         {
-            if (current->HasScript<BrawlerStateMachine>())
+            if (current->HasScript<StateMachine>())
                 return current;
 
             if (!current->HasComponent<Canis::Transform>())
                 break;
 
-            current = current->GetComponent<Canis::Transform>().parent;
+            current =
+                current->GetComponent<Canis::Transform>().parent;
         }
 
         return nullptr;
@@ -139,7 +157,10 @@ namespace AICombat
 
     bool HammerDamage::HasDamagedThisSwing(Canis::Entity& _target) const
     {
-        return std::find(m_hitTargetsThisSwing.begin(), m_hitTargetsThisSwing.end(), &_target)
+        return std::find(
+            m_hitTargetsThisSwing.begin(),
+            m_hitTargetsThisSwing.end(),
+            &_target)
             != m_hitTargetsThisSwing.end();
     }
 }
