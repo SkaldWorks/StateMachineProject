@@ -1,0 +1,86 @@
+Environment:
+  ClearColor: [0.09, 0.12, 0.17, 1]
+Entities:
+  - Entity: 920001
+    Name: fireBullet
+    Tag: Projectile
+    Canis::ParticleEmitter:
+      playOnStart: true
+      looping: true
+      burstMode: false
+      destroyEntityWhenDone: true
+      localSpace: false
+      burstCount: 18
+      spawnCount: 2
+      emissionDuration: 0.1
+      spawnInterval: 0.003
+      particleLifetime: 0.3
+      gravity: 10
+      drag: 2
+      speedMin: 1.2
+      speedMax: 3.8
+      spawnExtents: [0.15, 0.15, 0.15]
+      minVelocity: [-1, -0.2, -1]
+      maxVelocity: [1, 1.3, 1]
+      startScaleMin: [0.08, 0.08, 0.08]
+      startScaleMax: [0.18, 0.18, 0.18]
+      endScale: [0.01, 0.01, 0.01]
+      startColor: [1, 0.7, 0, 1]
+      endColor: [1, 0.7, 0, 1]
+      modelPath: assets/defaults/models/cube.glb
+      materialPath: assets/defaults/materials/default.material
+      castShadow: false
+    Canis::Transform:
+      active: true
+      position: [0, 0, 0]
+      rotation: [0, 0, 0]
+      scale: [0.18, 0.18, 0.6]
+      parent: 0
+      children:
+        []
+    Canis::Rigidbody:
+      active: true
+      motionType: 1
+      mass: 1
+      friction: 0.2
+      restitution: 0
+      linearDamping: 0.05
+      angularDamping: 0.05
+      useGravity: true
+      isSensor: false
+      layer: 1
+      mask: 4294967295
+      allowSleeping: true
+      lockRotationX: false
+      lockRotationY: false
+      lockRotationZ: false
+      linearVelocity: [0, 0, 0]
+      angularVelocity: [0, 0, 0]
+    Canis::BoxCollider:
+      active: true
+      size: [1, 1, 1]
+    Canis::PointLight:
+      enabled: true
+      color: [0.8803987, 0.122846335, 0.122846335, 1]
+      intensity: 12
+      range: 12
+    Canis::Material:
+      color: [1, 0.18, 0.18, 1]
+      MaterialAsset:
+        uuid: 17490362529814420531
+    Canis::Model:
+      color: [1, 0.18, 0.18, 1]
+      ModelAsset:
+        uuid: 17154083321347000101
+    SuperPupUtilities::Bullet:
+      damage: 1
+      speed: 2
+      lifeTime: 30
+      gravity: 0
+      destroyOnImpact: true
+      destroyEntityWhenDone: false
+      autoLaunch: false
+      collisionMask: 4294967295
+      hitImpulse: 0
+      targetTags:
+        - Red

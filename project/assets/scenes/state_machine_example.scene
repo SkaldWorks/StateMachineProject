@@ -267,7 +267,7 @@ Entities:
     Canis::Transform:
       active: true
       position: [4, 1, 0]
-      rotation: [0, 3.1415927, 0]
+      rotation: [0, 0, 0]
       scale: [1, 1, 1]
       parent: 0
       children:
@@ -398,3 +398,146 @@ Entities:
       color: [0.78, 0.9, 1, 1]
       ModelAsset:
         uuid: 17154083321347000101
+  - Entity: 14547123492595532341
+    Name: Blue Healer
+    Tag: Blue
+    Canis::Transform:
+      active: true
+      position: [-2.2684932, 1, 5.2209826]
+      rotation: [0, -0, 0]
+      scale: [1, 1, 1]
+      parent: 0
+      children:
+        []
+    Canis::Rigidbody:
+      active: true
+      motionType: 1
+      mass: 1
+      friction: 0.2
+      restitution: 0
+      linearDamping: 0.05
+      angularDamping: 0.05
+      useGravity: false
+      isSensor: false
+      layer: 2
+      mask: 21
+      allowSleeping: false
+      lockRotationX: false
+      lockRotationY: false
+      lockRotationZ: false
+      linearVelocity: [0, 0, 0]
+      angularVelocity: [0, 0, 0]
+    Canis::BoxCollider:
+      active: true
+      size: [1, 1, 1]
+    Canis::Material:
+      color: [0.24, 0.58, 0.98, 1]
+      MaterialAsset:
+        uuid: 17490362529814420531
+    Canis::Model:
+      color: [0.24, 0.58, 0.98, 1]
+      ModelAsset:
+        uuid: 17154083321347000101
+    AICombat::HealerStateMachine:
+      allyTag: Blue
+      targetTag: Red
+      detectionRange: 20
+      bodyColliderSize: [1, 1, 1]
+      moveSpeed: 3.5
+      followDistance: 4
+      healAmount: 2
+      healInterval: 1
+      healSfx:
+        uuid: 17698075993456772146
+        path: assets/audio/sfx/Healing.ogg
+      healSfxVolume: 1
+      healEffectPrefab: 11988624165116550252
+      healEffectLifetime: 0.5
+      maxHealth: 30
+      logStateChanges: true
+      hitSfxPath1:
+        {}
+      hitSfxPath2:
+        {}
+      hitSfxVolume: 1
+      deathEffectPrefab: 1932126691914227009
+  - Entity: 6992281311464379308
+    Name: Red Mage
+    Tag: Red
+    Canis::Transform:
+      active: true
+      position: [4, 1, 3.3627214]
+      rotation: [0, 0, 0]
+      scale: [1, 1, 1]
+      parent: 0
+      children:
+        []
+    Canis::Rigidbody:
+      active: true
+      motionType: 1
+      mass: 1
+      friction: 0.2
+      restitution: 0
+      linearDamping: 0.05
+      angularDamping: 0.05
+      useGravity: false
+      isSensor: false
+      layer: 4
+      mask: 11
+      allowSleeping: false
+      lockRotationX: false
+      lockRotationY: false
+      lockRotationZ: false
+      linearVelocity: [0, 0, 0]
+      angularVelocity: [0, 0, 0]
+    Canis::BoxCollider:
+      active: true
+      size: [1, 1, 1]
+    Canis::Material:
+      color: [0.93, 0.32, 0.3, 1]
+      MaterialAsset:
+        uuid: 17490362529814420531
+    Canis::Model:
+      color: [0.93, 0.32, 0.3, 1]
+      ModelAsset:
+        uuid: 17154083321347000101
+    AICombat::MageStateMachine:
+      targetTag: Blue
+      detectionRange: 20
+      bodyColliderSize: [1, 1, 1]
+      moveSpeed: 3
+      castWindupTime: 1.5
+      attackRange: 8
+      projectilePoolCode: mage_bullet
+      projectileSpawnDistance: 1.25
+      projectileSpawnHeight: 0
+      projectileDamage: 10
+      projectileSpeed: 18
+      projectileLifeTime: 6
+      projectileGravity: 0
+      projectileDestroyOnImpact: true
+      projectileDestroyEntityWhenDone: false
+      projectileHitImpulse: 0
+      castSfx:
+        uuid: 11303179072488729497
+        path: assets/audio/sfx/MagicCast.ogg
+      castSfxVolume: 1
+      maxHealth: 24
+      logStateChanges: true
+      hitSfxPath1:
+        uuid: 9101673412543458587
+        path: assets/audio/sfx/hit_1.ogg
+      hitSfxPath2:
+        uuid: 15814014518013310489
+        path: assets/audio/sfx/hit_2.ogg
+      hitSfxVolume: 1
+      deathEffectPrefab: ~
+  - Entity: 12826346397889471460
+    Name: BulletPool
+    Tag: ""
+    SuperPupUtilities::SimpleObjectPool:
+      logWarnings: true
+      pools:
+        - code: mage_bullet
+          prefab: 9364602567353176619
+          size: 1

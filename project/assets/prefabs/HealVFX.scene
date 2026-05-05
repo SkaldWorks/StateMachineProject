@@ -1,0 +1,45 @@
+Environment:
+  ClearColor: [0.08, 0.1, 0.14, 1]
+Entities:
+  - Entity: 930001
+    Name: HealParticles
+    Tag: ""
+    Canis::ParticleEmitter:
+      playOnStart: true
+      looping: false
+      burstMode: false
+      destroyEntityWhenDone: true
+      localSpace: false
+      burstCount: 0
+      spawnCount: 0
+      emissionDuration: 0.2
+      spawnInterval: 0.01
+      particleLifetime: 0.5
+      gravity: 0
+      drag: 0
+      speedMin: 0.5
+      speedMax: 5
+      spawnExtents: [0.5, 0.5, 0.5]
+      minVelocity: [0, 0, 0]
+      maxVelocity: [0, 0, 0]
+      startScaleMin: [0.2, 1, 0.2]
+      startScaleMax: [0.2, 1, 0.2]
+      endScale: [0.01, 0.01, 0.01]
+      startColor: [0, 1, 0, 1]
+      endColor: [0, 1, 0, 0.5]
+      modelPath: assets/defaults/models/cube.glb
+      materialPath: assets/defaults/materials/default.material
+      castShadow: false
+    Canis::Transform:
+      active: true
+      position: [0, 0, 0]
+      rotation: [0, 0, 0]
+      scale: [1, 1, 1]
+      parent: 0
+      children:
+        []
+    Canis::PointLight:
+      enabled: true
+      color: [0.60784316, 1, 0.60784316, 1]
+      intensity: 8
+      range: 12

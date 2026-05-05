@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <string>
 
+#include <AICombat/StateMachine.hpp>
+
 namespace SuperPupUtilities
 {
     namespace
@@ -229,11 +231,25 @@ namespace SuperPupUtilities
         if (hit.entity == nullptr || hit.entity == &entity)
             return;
 
-        if (IsValidTarget(*hit.entity) && hitImpulse > 0.0f && hit.entity->HasComponent<Canis::Rigidbody>())
+        // APPLY DAMAGE
+        if (IsValidTarget(*hit.entity))
         {
-            hit.entity->GetComponent<Canis::Rigidbody>().AddForce(
-                direction * hitImpulse,
-                Canis::Rigidbody3DForceMode::IMPULSE);
+            if (AICombat::StateMachine* target =
+                hit.entity->GetScript<AICombat::StateMachine>())
+            {
+                if (target->IsAlive())
+                {
+                    target->TakeDamage(damage);
+                }
+            }
+
+            // optional physics push
+            if (hitImpulse > 0.0f && hit.entity->HasComponent<Canis::Rigidbody>())
+            {
+                hit.entity->GetComponent<Canis::Rigidbody>().AddForce(
+                    direction * hitImpulse,
+                    Canis::Rigidbody3DForceMode::IMPULSE);
+            }
         }
 
         if (destroyOnImpact)

@@ -1,0 +1,64 @@
+Environment:
+  ClearColor: [0.38626686, 0.10652154, 0.7009804, 1]
+Entities:
+  - Entity: 752832027556229489
+    Name: Camera
+    Tag: MainCamera
+    Canis::RectTransform:
+      active: true
+      position: [0, 0]
+      size: [32, 32]
+      scale: [1, 1]
+      anchorMin: [0.5, 0.5]
+      anchorMax: [0.5, 0.5]
+      pivot: [0.5, 0.5]
+      originOffset: [0, 0]
+      depth: 0
+      rotation: 0
+      rotationOriginOffset: [0, 0]
+      parent: 0
+      children:
+        []
+    Canis::Camera2D:
+      position: [0, 0]
+      scale: 1
+  - Entity: 2222603504552759504
+    Name: BigBrawler
+    Tag: ""
+    Canis::Transform:
+      active: true
+      position: [0, 0, 0]
+      rotation: [0, 0, 0]
+      scale: [1, 1, 1]
+      parent: 0
+      children:
+        []
+    Canis::Rigidbody:
+      active: true
+      motionType: 2
+      mass: 1
+      friction: 0.2
+      restitution: 0
+      linearDamping: 0.05
+      angularDamping: 0.05
+      useGravity: true
+      isSensor: false
+      layer: 1
+      mask: 4294967295
+      allowSleeping: true
+      lockRotationX: false
+      lockRotationY: false
+      lockRotationZ: false
+      linearVelocity: [0, 0, 0]
+      angularVelocity: [0, 0, 0]
+    Canis::BoxCollider:
+      active: true
+      size: [1, 1, 1]
+    Canis::Material:
+      color: [1, 1, 1, 1]
+      MaterialAsset:
+        uuid: 17490362529814420531
+    Canis::Model:
+      color: [1, 1, 1, 1]
+      ModelAsset:
+        uuid: 17154083321347000101
