@@ -533,7 +533,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 12826346397889471460
     Name: BulletPool
     Tag: ""
@@ -616,7 +616,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 3268201055787773812
     Name: Red Mage
     Tag: Red
@@ -687,7 +687,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 7870597232731990063
     Name: Red Mage
     Tag: Red
@@ -758,7 +758,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 6267328240793237275
     Name: Red Mage
     Tag: Red
@@ -829,7 +829,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 9824748006508649095
     Name: Blue Mage
     Tag: Blue
@@ -900,7 +900,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 1287013700708010445
     Name: Blue Healer
     Tag: Blue
@@ -1296,7 +1296,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 10743526936447479777
     Name: Blue Mage
     Tag: Blue
@@ -1367,7 +1367,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 2409543575758934992
     Name: Blue Mage
     Tag: Blue
@@ -1438,7 +1438,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 14440849244239375452
     Name: Blue Mage
     Tag: Blue
@@ -1509,4 +1509,4 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009

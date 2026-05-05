@@ -12,156 +12,106 @@
 
 namespace AICombat
 {
-    namespace
+    namespace { ScriptConf conf = {}; }
+
+    static MageStateMachine* SM(SuperPupUtilities::StateMachine* s)
     {
-        ScriptConf mageStateMachineConf = {};
+        return dynamic_cast<MageStateMachine*>(s);
     }
 
-    // =========================
-    // Idle
-    // =========================
-    MageIdleState::MageIdleState(SuperPupUtilities::StateMachine& _stateMachine) :
-        State(Name, _stateMachine) {}
+    MageIdleState::MageIdleState(SuperPupUtilities::StateMachine& s) : State(Name, s) {}
 
     void MageIdleState::Update(float)
     {
-        auto* sm = dynamic_cast<MageStateMachine*>(m_stateMachine);
-        if (sm == nullptr)
-            return;
-
-        if (sm->FindClosestTarget() != nullptr)
-            sm->ChangeState(MageChaseState::Name);
+        if (auto* sm = SM(m_stateMachine))
+            if (sm->FindClosestTarget())
+                sm->ChangeState(MageChaseState::Name);
     }
 
-    // =========================
-    // Chase
-    // =========================
-    MageChaseState::MageChaseState(SuperPupUtilities::StateMachine& _stateMachine) :
-        State(Name, _stateMachine) {}
+    MageChaseState::MageChaseState(SuperPupUtilities::StateMachine& s) : State(Name, s) {}
 
-    void MageChaseState::Update(float _dt)
+    void MageChaseState::Update(float dt)
     {
-        auto* sm = dynamic_cast<MageStateMachine*>(m_stateMachine);
-        if (sm == nullptr)
-            return;
+        auto* sm = SM(m_stateMachine);
+        if (!sm) return;
 
-        Canis::Entity* target = sm->FindClosestTarget();
+        auto* t = sm->FindClosestTarget();
+        if (!t) return sm->ChangeState(MageIdleState::Name);
 
-        if (target == nullptr)
-        {
-            sm->ChangeState(MageIdleState::Name);
-            return;
-        }
+        sm->FaceTarget(*t);
 
-        sm->FaceTarget(*target);
+        if (sm->DistanceTo(*t) <= sm->GetAttackRange())
+            return sm->ChangeState(MageCastState::Name);
 
-        if (sm->DistanceTo(*target) <= sm->GetAttackRange())
-        {
-            sm->ChangeState(MageCastState::Name);
-            return;
-        }
-
-        sm->MoveTowards(*target, moveSpeed, _dt);
+        sm->MoveTowards(*t, moveSpeed, dt);
     }
 
-    // =========================
-    // Cast
-    // =========================
-    MageCastState::MageCastState(SuperPupUtilities::StateMachine& _stateMachine) :
-        State(Name, _stateMachine) {}
+    MageCastState::MageCastState(SuperPupUtilities::StateMachine& s) : State(Name, s) {}
 
-    void MageCastState::Enter()
-    {
-        m_hasFired = false;
-    }
+    void MageCastState::Enter() { m_hasFired = false; }
 
     void MageCastState::Update(float)
     {
-        auto* sm = dynamic_cast<MageStateMachine*>(m_stateMachine);
-        if (sm == nullptr)
-            return;
+        auto* sm = SM(m_stateMachine);
+        if (!sm) return;
 
-        Canis::Entity* target = sm->FindClosestTarget();
-        if (target == nullptr)
-        {
-            sm->ChangeState(MageIdleState::Name);
-            return;
-        }
+        auto* t = sm->FindClosestTarget();
+        if (!t) return sm->ChangeState(MageIdleState::Name);
 
-        sm->FaceTarget(*target);
+        sm->FaceTarget(*t);
 
-        // ⏱ 0.5s delay before firing
         if (!m_hasFired && sm->GetStateTime() >= castWindupTime)
         {
             sm->ShootProjectile();
             m_hasFired = true;
-
-            if (sm->FindClosestTarget() != nullptr)
-                sm->ChangeState(MageChaseState::Name);
-            else
-                sm->ChangeState(MageIdleState::Name);
+            sm->ChangeState(sm->FindClosestTarget()
+                ? MageChaseState::Name
+                : MageIdleState::Name);
         }
     }
 
-    void MageCastState::Exit()
-    {
-        m_hasFired = false;
-    }
+    void MageCastState::Exit() { m_hasFired = false; }
 
-    // =========================
-    // State Machine
-    // =========================
-    MageStateMachine::MageStateMachine(Canis::Entity& _entity) :
-        StateMachine(_entity),
-        idleState(*this),
-        chaseState(*this),
-        castState(*this)
+    MageStateMachine::MageStateMachine(Canis::Entity& e) :
+        StateMachine(e), idleState(*this), chaseState(*this), castState(*this)
     {
         maxHealth = 24;
     }
 
-    void RegisterMageStateMachineScript(Canis::App& _app)
+    void RegisterMageStateMachineScript(Canis::App& app)
     {
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, targetTag);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, detectionRange);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, bodyColliderSize);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, targetTag);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, detectionRange);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, bodyColliderSize);
 
-        RegisterAccessorProperty(mageStateMachineConf,
-            AICombat::MageStateMachine,
-            chaseState,
-            moveSpeed);
+        RegisterAccessorProperty(conf, AICombat::MageStateMachine, chaseState, moveSpeed);
+        RegisterAccessorProperty(conf, AICombat::MageStateMachine, castState, castWindupTime);
 
-        RegisterAccessorProperty(mageStateMachineConf,
-            AICombat::MageStateMachine,
-            castState,
-            castWindupTime);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, attackRange);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectilePoolCode);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectileSpawnDistance);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectileSpawnHeight);
 
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, attackRange);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectilePoolCode);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectileSpawnDistance);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectileSpawnHeight);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectileDamage);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectileSpeed);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectileLifeTime);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectileGravity);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectileDestroyOnImpact);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectileDestroyEntityWhenDone);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, projectileHitImpulse);
 
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectileDamage);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectileSpeed);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectileLifeTime);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectileGravity);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectileDestroyOnImpact);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectileDestroyEntityWhenDone);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, projectileHitImpulse);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, castSfx);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, castSfxVolume);
 
-        //  Cast SFX
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, castSfx);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, castSfxVolume);
-
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, maxHealth);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, logStateChanges);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, hitSfxPath1);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, hitSfxPath2);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, hitSfxVolume);
-        REGISTER_PROPERTY(mageStateMachineConf, AICombat::MageStateMachine, deathEffectPrefab);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, maxHealth);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, logStateChanges);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, hitSfxPath1);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, hitSfxPath2);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, hitSfxVolume);
+        REGISTER_PROPERTY(conf, AICombat::MageStateMachine, deathEffectPrefab);
 
         DEFAULT_CONFIG_AND_REQUIRED(
-            mageStateMachineConf,
+            conf,
             AICombat::MageStateMachine,
             Canis::Transform,
             Canis::Material,
@@ -169,23 +119,19 @@ namespace AICombat
             Canis::Rigidbody,
             Canis::BoxCollider);
 
-        mageStateMachineConf.DEFAULT_DRAW_INSPECTOR(
-            AICombat::MageStateMachine);
-
-        _app.RegisterScript(mageStateMachineConf);
+        conf.DEFAULT_DRAW_INSPECTOR(AICombat::MageStateMachine);
+        app.RegisterScript(conf);
     }
 
-    DEFAULT_UNREGISTER_SCRIPT(mageStateMachineConf, MageStateMachine)
+    DEFAULT_UNREGISTER_SCRIPT(conf, MageStateMachine)
 
     void MageStateMachine::Ready()
     {
         StateMachine::Ready();
-
         ClearStates();
         AddState(idleState);
         AddState(chaseState);
         AddState(castState);
-
         ChangeState(MageIdleState::Name);
     }
 
@@ -199,37 +145,28 @@ namespace AICombat
         return attackRange;
     }
 
-    // =========================
-    // Shoot
-    // =========================
     void MageStateMachine::ShootProjectile()
     {
-        if (projectilePoolCode.empty())
-            return;
+        if (projectilePoolCode.empty()) return;
 
-        if (SuperPupUtilities::SimpleObjectPool::Instance == nullptr)
+        if (!SuperPupUtilities::SimpleObjectPool::Instance)
         {
             Canis::Debug::Warning("%s: no pool.", entity.name.c_str());
             return;
         }
 
-        if (!entity.HasComponent<Canis::Transform>())
-            return;
+        if (!entity.HasComponent<Canis::Transform>()) return;
 
-        Canis::Transform& t = entity.GetComponent<Canis::Transform>();
+        auto& t = entity.GetComponent<Canis::Transform>();
 
-        const Canis::Vector3 pos =
-            t.GetGlobalPosition() +
+        const auto pos = t.GetGlobalPosition() +
             (t.GetForward() * projectileSpawnDistance) +
             Canis::Vector3(0.0f, projectileSpawnHeight, 0.0f);
 
-        const Canis::Vector3 rot = t.GetGlobalRotation();
+        const auto rot = t.GetGlobalRotation();
 
-        Canis::Entity* proj =
-            SuperPupUtilities::SimpleObjectPool::Instance->Spawn(projectilePoolCode);
-
-        if (proj == nullptr)
-            return;
+        auto* proj = SuperPupUtilities::SimpleObjectPool::Instance->Spawn(projectilePoolCode);
+        if (!proj) return;
 
         if (proj->HasComponent<Canis::Transform>())
         {
@@ -238,29 +175,25 @@ namespace AICombat
             pt.rotation = rot;
         }
 
-        if (auto* bullet = proj->GetScript<SuperPupUtilities::Bullet>())
+        if (auto* b = proj->GetScript<SuperPupUtilities::Bullet>())
         {
-            bullet->damage = projectileDamage;
-            bullet->speed = projectileSpeed;
-            bullet->lifeTime = projectileLifeTime;
-            bullet->gravity = projectileGravity;
-            bullet->destroyOnImpact = projectileDestroyOnImpact;
-            bullet->destroyEntityWhenDone = projectileDestroyEntityWhenDone;
-            bullet->hitImpulse = projectileHitImpulse;
+            b->damage = projectileDamage;
+            b->speed = projectileSpeed;
+            b->lifeTime = projectileLifeTime;
+            b->gravity = projectileGravity;
+            b->destroyOnImpact = projectileDestroyOnImpact;
+            b->destroyEntityWhenDone = projectileDestroyEntityWhenDone;
+            b->hitImpulse = projectileHitImpulse;
 
-            bullet->targetTags.clear();
-            if (!targetTag.empty())
-                bullet->targetTags.push_back(targetTag);
+            b->targetTags.clear();
+            if (!targetTag.empty()) b->targetTags.push_back(targetTag);
 
-            bullet->Launch();
+            b->Launch();
 
-            //  PLAY CAST SOUND
             if (!castSfx.Empty())
-            {
                 Canis::AudioManager::PlaySFX(
                     castSfx,
                     std::clamp(castSfxVolume, 0.0f, 0.7f));
-            }
         }
     }
 }

@@ -3,171 +3,113 @@
 #include <Canis/App.hpp>
 #include <Canis/AudioManager.hpp>
 #include <Canis/ConfigHelper.hpp>
-#include <Canis/Debug.hpp>
 
 #include <algorithm>
 #include <limits>
 
 namespace AICombat
 {
-    namespace
+    namespace { ScriptConf healerStateMachineConf = {}; }
+
+    static HealerStateMachine* SM(SuperPupUtilities::StateMachine* s)
     {
-        ScriptConf healerStateMachineConf = {};
+        return static_cast<HealerStateMachine*>(s);
     }
 
-    HealerIdleState::HealerIdleState(SuperPupUtilities::StateMachine& _stateMachine) :
-        State(Name, _stateMachine) {}
+    static bool InvalidTarget(HealerStateMachine* sm)
+    {
+        return !sm || !sm->currentHealTarget || !sm->currentHealTarget->active;
+    }
+
+    HealerIdleState::HealerIdleState(SuperPupUtilities::StateMachine& sm) :
+        State(Name, sm) {}
 
     void HealerIdleState::Update(float)
     {
-        HealerStateMachine* stateMachine =
-            dynamic_cast<HealerStateMachine*>(m_stateMachine);
+        auto* sm = SM(m_stateMachine);
+        if (!sm) return;
 
-        if (stateMachine == nullptr)
-            return;
-
-        Canis::Entity* target = stateMachine->FindLowestHealthAlly();
-
-        if (target == nullptr)
-            return;
-
-        stateMachine->ReserveTarget(target);
-        stateMachine->ChangeState(HealerMoveState::Name);
+        if (auto* t = sm->FindLowestHealthAlly())
+        {
+            sm->ReserveTarget(t);
+            sm->ChangeState(HealerMoveState::Name);
+        }
     }
 
-    HealerMoveState::HealerMoveState(SuperPupUtilities::StateMachine& _stateMachine) :
-        State(Name, _stateMachine) {}
+    HealerMoveState::HealerMoveState(SuperPupUtilities::StateMachine& sm) :
+        State(Name, sm) {}
 
-    void HealerMoveState::Update(float _dt)
+    void HealerMoveState::Update(float dt)
     {
-        HealerStateMachine* stateMachine =
-            dynamic_cast<HealerStateMachine*>(m_stateMachine);
-
-        if (stateMachine == nullptr ||
-            stateMachine->currentHealTarget == nullptr ||
-            !stateMachine->currentHealTarget->active)
+        auto* sm = SM(m_stateMachine);
+        if (InvalidTarget(sm))
         {
-            if (stateMachine != nullptr)
-                stateMachine->ChangeState(HealerIdleState::Name);
-
+            if (sm) sm->ChangeState(HealerIdleState::Name);
             return;
         }
 
-        Canis::Entity& target = *stateMachine->currentHealTarget;
-
+        auto& target = *sm->currentHealTarget;
         if (!target.HasComponent<Canis::Transform>() ||
-            !stateMachine->entity.HasComponent<Canis::Transform>())
+            !sm->entity.HasComponent<Canis::Transform>())
             return;
 
-        Canis::Transform& selfTransform =
-            stateMachine->entity.GetComponent<Canis::Transform>();
+        auto& self = sm->entity.GetComponent<Canis::Transform>();
 
-        const Canis::Vector3 desiredPosition =
-            stateMachine->GetHealPosition(target, followDistance);
+        Canis::Vector3 dir =
+            sm->GetHealPosition(target, followDistance) -
+            self.GetGlobalPosition();
 
-        Canis::Vector3 moveDirection =
-            desiredPosition - selfTransform.GetGlobalPosition();
+        dir.y = 0.0f;
 
-        moveDirection.y = 0.0f;
+        if (glm::length(dir) > 0.1f)
+            self.position += glm::normalize(dir) * moveSpeed * dt;
 
-        if (glm::length(moveDirection) > 0.1f)
-        {
-            moveDirection = glm::normalize(moveDirection);
-            selfTransform.position += moveDirection * moveSpeed * _dt;
-        }
+        sm->FaceTarget(target);
 
-        stateMachine->FaceTarget(target);
-
-        if (glm::distance(
-            selfTransform.GetGlobalPosition(),
-            desiredPosition) <= 0.25f)
-        {
-            stateMachine->ChangeState(HealerHealState::Name);
-        }
+        if (glm::length(dir) <= 0.25f)
+            sm->ChangeState(HealerHealState::Name);
     }
 
-    HealerHealState::HealerHealState(SuperPupUtilities::StateMachine& _stateMachine) :
-        State(Name, _stateMachine) {}
+    HealerHealState::HealerHealState(SuperPupUtilities::StateMachine& sm) :
+        State(Name, sm) {}
 
-    void HealerHealState::Enter()
+    void HealerHealState::Enter() { m_timer = 0.0f; }
+
+    void HealerHealState::Update(float dt)
     {
-        m_timer = 0.0f;
-    }
-
-    void HealerHealState::Update(float _dt)
-    {
-        HealerStateMachine* stateMachine =
-            dynamic_cast<HealerStateMachine*>(m_stateMachine);
-
-        if (stateMachine == nullptr ||
-            stateMachine->currentHealTarget == nullptr ||
-            !stateMachine->currentHealTarget->active)
+        auto* sm = SM(m_stateMachine);
+        if (InvalidTarget(sm))
         {
-            if (stateMachine != nullptr)
-                stateMachine->ChangeState(HealerIdleState::Name);
-
+            if (sm) sm->ChangeState(HealerIdleState::Name);
             return;
         }
 
-        StateMachine* allyStateMachine =
-            stateMachine->currentHealTarget->GetScript<StateMachine>();
-
-        if (allyStateMachine == nullptr || !allyStateMachine->IsAlive())
+        auto* ally = sm->currentHealTarget->GetScript<StateMachine>();
+        if (!ally || !ally->IsAlive() ||
+            ally->GetCurrentHealth() >= ally->GetMaxHealth())
         {
-            stateMachine->ChangeState(HealerIdleState::Name);
+            sm->ChangeState(HealerIdleState::Name);
             return;
         }
 
-        if (allyStateMachine->GetCurrentHealth() >=
-            allyStateMachine->GetMaxHealth())
-        {
-            stateMachine->ChangeState(HealerIdleState::Name);
-            return;
-        }
-
-        m_timer += _dt;
-
+        m_timer += dt;
         const float interval = std::max(healInterval, 0.001f);
 
         while (m_timer >= interval)
         {
             m_timer -= interval;
 
-            if (stateMachine == nullptr ||
-                stateMachine->currentHealTarget == nullptr ||
-                !stateMachine->currentHealTarget->active)
-                return;
+            ally->Heal(healAmount);
+            sm->SpawnHealEffect();
 
-            allyStateMachine =
-                stateMachine->currentHealTarget->GetScript<StateMachine>();
-
-            if (allyStateMachine == nullptr || !allyStateMachine->IsAlive())
-            {
-                stateMachine->ChangeState(HealerIdleState::Name);
-                return;
-            }
-
-            if (allyStateMachine->GetCurrentHealth() >=
-                allyStateMachine->GetMaxHealth())
-            {
-                stateMachine->ChangeState(HealerIdleState::Name);
-                return;
-            }
-
-            allyStateMachine->Heal(healAmount);
-            stateMachine->SpawnHealEffect();
-
-            if (!stateMachine->healSfx.Empty())
-            {
+            if (!sm->healSfx.Empty())
                 Canis::AudioManager::PlaySFX(
-                    stateMachine->healSfx,
-                    std::clamp(stateMachine->healSfxVolume, 0.0f, 0.3f));
-            }
+                    sm->healSfx,
+                    std::clamp(sm->healSfxVolume, 0.0f, 0.3f));
 
-            if (allyStateMachine->GetCurrentHealth() >=
-                allyStateMachine->GetMaxHealth())
+            if (ally->GetCurrentHealth() >= ally->GetMaxHealth())
             {
-                stateMachine->ChangeState(HealerIdleState::Name);
+                sm->ChangeState(HealerIdleState::Name);
                 return;
             }
         }
@@ -176,49 +118,27 @@ namespace AICombat
     void HealerHealState::Exit()
     {
         m_timer = 0.0f;
-
-        if (HealerStateMachine* stateMachine =
-            dynamic_cast<HealerStateMachine*>(m_stateMachine))
-        {
-            stateMachine->ClearReservedTarget();
-        }
+        if (auto* sm = SM(m_stateMachine))
+            sm->ClearReservedTarget();
     }
 
-    HealerStateMachine::HealerStateMachine(Canis::Entity& _entity) :
-        StateMachine(_entity),
-        idleState(*this),
-        moveState(*this),
-        healState(*this)
+    HealerStateMachine::HealerStateMachine(Canis::Entity& e) :
+        StateMachine(e), idleState(*this), moveState(*this), healState(*this)
     {
         maxHealth = 30;
     }
 
-    void RegisterHealerStateMachineScript(Canis::App& _app)
+    void RegisterHealerStateMachineScript(Canis::App& app)
     {
         REGISTER_PROPERTY(healerStateMachineConf, AICombat::HealerStateMachine, allyTag);
         REGISTER_PROPERTY(healerStateMachineConf, AICombat::HealerStateMachine, targetTag);
         REGISTER_PROPERTY(healerStateMachineConf, AICombat::HealerStateMachine, detectionRange);
         REGISTER_PROPERTY(healerStateMachineConf, AICombat::HealerStateMachine, bodyColliderSize);
 
-        RegisterAccessorProperty(healerStateMachineConf,
-            AICombat::HealerStateMachine,
-            moveState,
-            moveSpeed);
-
-        RegisterAccessorProperty(healerStateMachineConf,
-            AICombat::HealerStateMachine,
-            moveState,
-            followDistance);
-
-        RegisterAccessorProperty(healerStateMachineConf,
-            AICombat::HealerStateMachine,
-            healState,
-            healAmount);
-
-        RegisterAccessorProperty(healerStateMachineConf,
-            AICombat::HealerStateMachine,
-            healState,
-            healInterval);
+        RegisterAccessorProperty(healerStateMachineConf, AICombat::HealerStateMachine, moveState, moveSpeed);
+        RegisterAccessorProperty(healerStateMachineConf, AICombat::HealerStateMachine, moveState, followDistance);
+        RegisterAccessorProperty(healerStateMachineConf, AICombat::HealerStateMachine, healState, healAmount);
+        RegisterAccessorProperty(healerStateMachineConf, AICombat::HealerStateMachine, healState, healInterval);
 
         REGISTER_PROPERTY(healerStateMachineConf, AICombat::HealerStateMachine, healSfx);
         REGISTER_PROPERTY(healerStateMachineConf, AICombat::HealerStateMachine, healSfxVolume);
@@ -235,16 +155,11 @@ namespace AICombat
         DEFAULT_CONFIG_AND_REQUIRED(
             healerStateMachineConf,
             AICombat::HealerStateMachine,
-            Canis::Transform,
-            Canis::Material,
-            Canis::Model,
-            Canis::Rigidbody,
-            Canis::BoxCollider);
+            Canis::Transform, Canis::Material, Canis::Model,
+            Canis::Rigidbody, Canis::BoxCollider);
 
-        healerStateMachineConf.DEFAULT_DRAW_INSPECTOR(
-            AICombat::HealerStateMachine);
-
-        _app.RegisterScript(healerStateMachineConf);
+        healerStateMachineConf.DEFAULT_DRAW_INSPECTOR(AICombat::HealerStateMachine);
+        app.RegisterScript(healerStateMachineConf);
     }
 
     DEFAULT_UNREGISTER_SCRIPT(healerStateMachineConf, HealerStateMachine)
@@ -252,12 +167,10 @@ namespace AICombat
     void HealerStateMachine::Ready()
     {
         StateMachine::Ready();
-
         ClearStates();
         AddState(idleState);
         AddState(moveState);
         AddState(healState);
-
         ChangeState(HealerIdleState::Name);
     }
 
@@ -268,181 +181,94 @@ namespace AICombat
         StateMachine::Destroy();
     }
 
-    void HealerStateMachine::Update(float _dt)
+    void HealerStateMachine::Update(float dt)
     {
-        UpdateHealEffects(_dt);
-        StateMachine::Update(_dt);
+        UpdateHealEffects(dt);
+        StateMachine::Update(dt);
     }
 
     Canis::Entity* HealerStateMachine::FindLowestHealthAlly() const
     {
-        Canis::Entity* bestTarget = nullptr;
-        float lowestHealthRatio = std::numeric_limits<float>::max();
+        Canis::Entity* best = nullptr;
+        float bestRatio = std::numeric_limits<float>::max();
 
-        for (Canis::Entity* candidate :
-            entity.scene.GetEntitiesWithTag(allyTag))
+        for (auto* e : entity.scene.GetEntitiesWithTag(allyTag))
         {
-            if (candidate == nullptr ||
-                candidate == &entity ||
-                !candidate->active)
-                continue;
+            if (!e || e == &entity || !e->active) continue;
 
-            StateMachine* ally =
-                candidate->GetScript<StateMachine>();
+            auto* ally = e->GetScript<StateMachine>();
+            if (!ally || !ally->IsAlive()) continue;
+            if (ally->GetCurrentHealth() >= ally->GetMaxHealth()) continue;
+            if (IsTargetBeingHealed(*e)) continue;
 
-            if (ally == nullptr ||
-                !ally->IsAlive())
-                continue;
-
-            if (ally->GetCurrentHealth() >= ally->GetMaxHealth())
-                continue;
-
-            if (IsTargetBeingHealed(*candidate))
-                continue;
-
-            const float healthRatio =
-                static_cast<float>(ally->GetCurrentHealth()) /
-                static_cast<float>(ally->GetMaxHealth());
-
-            if (healthRatio < lowestHealthRatio)
-            {
-                lowestHealthRatio = healthRatio;
-                bestTarget = candidate;
-            }
+            float ratio = (float)ally->GetCurrentHealth() / ally->GetMaxHealth();
+            if (ratio < bestRatio) bestRatio = ratio, best = e;
         }
 
-        return bestTarget;
+        return best;
     }
 
-    bool HealerStateMachine::IsTargetBeingHealed(Canis::Entity& _target) const
+    bool HealerStateMachine::IsTargetBeingHealed(Canis::Entity& t) const
     {
-        for (Canis::Entity* healer :
-            entity.scene.GetEntitiesWithTag(entity.tag))
+        for (auto* h : entity.scene.GetEntitiesWithTag(entity.tag))
         {
-            if (healer == nullptr ||
-                healer == &entity ||
-                !healer->active)
-                continue;
-
-            HealerStateMachine* healerScript =
-                healer->GetScript<HealerStateMachine>();
-
-            if (healerScript == nullptr)
-                continue;
-
-            if (healerScript->currentHealTarget == &_target)
-                return true;
+            auto* hs = h ? h->GetScript<HealerStateMachine>() : nullptr;
+            if (hs && hs->currentHealTarget == &t) return true;
         }
-
         return false;
     }
 
     Canis::Vector3 HealerStateMachine::GetHealPosition(
-        const Canis::Entity& _target,
-        float _distance) const
+        const Canis::Entity& t, float d) const
     {
-        const Canis::Transform& targetTransform =
-            _target.GetComponent<Canis::Transform>();
-
-        return targetTransform.GetGlobalPosition() -
-            (targetTransform.GetForward() * _distance);
+        auto& tr = t.GetComponent<Canis::Transform>();
+        return tr.GetGlobalPosition() - (tr.GetForward() * d);
     }
 
-    void HealerStateMachine::ReserveTarget(Canis::Entity* _target)
-    {
-        currentHealTarget = _target;
-    }
-
-    void HealerStateMachine::ClearReservedTarget()
-    {
-        currentHealTarget = nullptr;
-    }
+    void HealerStateMachine::ReserveTarget(Canis::Entity* t) { currentHealTarget = t; }
+    void HealerStateMachine::ClearReservedTarget() { currentHealTarget = nullptr; }
 
     void HealerStateMachine::SpawnHealEffect()
     {
-        if (healEffectPrefab.Empty() || currentHealTarget == nullptr)
+        if (healEffectPrefab.Empty() || !currentHealTarget ||
+            !currentHealTarget->HasComponent<Canis::Transform>())
             return;
 
-        if (!currentHealTarget->active)
-            return;
+        auto& t = currentHealTarget->GetComponent<Canis::Transform>();
 
-        if (!currentHealTarget->HasComponent<Canis::Transform>())
-            return;
-
-        const Canis::Transform& targetTransform =
-            currentHealTarget->GetComponent<Canis::Transform>();
-
-        const Canis::Vector3 spawnPosition =
-            targetTransform.GetGlobalPosition();
-
-        const Canis::Vector3 spawnRotation =
-            targetTransform.GetGlobalRotation();
-
-        std::vector<Canis::Entity*> spawnedEntities =
-            entity.scene.Instantiate(healEffectPrefab);
-
-        const float lifetime = std::max(healEffectLifetime, 0.0f);
-
-        for (Canis::Entity* spawnedEntity : spawnedEntities)
+        for (auto* e : entity.scene.Instantiate(healEffectPrefab))
         {
-            if (spawnedEntity == nullptr)
-                continue;
+            if (!e) continue;
 
-            if (spawnedEntity->HasComponent<Canis::Transform>())
+            if (e->HasComponent<Canis::Transform>())
             {
-                Canis::Transform& spawnedTransform =
-                    spawnedEntity->GetComponent<Canis::Transform>();
-
-                spawnedTransform.position = spawnPosition;
-                spawnedTransform.rotation = spawnRotation;
+                auto& et = e->GetComponent<Canis::Transform>();
+                et.position = t.GetGlobalPosition();
+                et.rotation = t.GetGlobalRotation();
             }
 
-            m_pendingHealEffects.push_back(PendingHealEffect
-            {
-                .entity = spawnedEntity,
-                .timeRemaining = lifetime
-            });
+            m_pendingHealEffects.push_back({ e, healEffectLifetime });
         }
     }
 
-    void HealerStateMachine::UpdateHealEffects(float _dt)
+    void HealerStateMachine::UpdateHealEffects(float dt)
     {
         for (size_t i = 0; i < m_pendingHealEffects.size();)
         {
-            PendingHealEffect& effect = m_pendingHealEffects[i];
-
-            if (effect.entity == nullptr)
+            auto& e = m_pendingHealEffects[i];
+            if (!e.entity || !e.entity->active || (e.timeRemaining -= dt) <= 0.0f)
             {
+                if (e.entity && e.entity->active) e.entity->Destroy();
                 m_pendingHealEffects.erase(m_pendingHealEffects.begin() + i);
-                continue;
             }
-
-            if (!effect.entity->active)
-            {
-                m_pendingHealEffects.erase(m_pendingHealEffects.begin() + i);
-                continue;
-            }
-
-            effect.timeRemaining -= _dt;
-
-            if (effect.timeRemaining > 0.0f)
-            {
-                ++i;
-                continue;
-            }
-
-            effect.entity->Destroy();
-            m_pendingHealEffects.erase(m_pendingHealEffects.begin() + i);
+            else ++i;
         }
     }
 
     void HealerStateMachine::DestroyAllPendingHealEffects()
     {
-        for (PendingHealEffect& effect : m_pendingHealEffects)
-        {
-            if (effect.entity != nullptr && effect.entity->active)
-                effect.entity->Destroy();
-        }
+        for (auto& e : m_pendingHealEffects)
+            if (e.entity && e.entity->active) e.entity->Destroy();
 
         m_pendingHealEffects.clear();
     }

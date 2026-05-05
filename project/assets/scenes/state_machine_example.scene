@@ -174,7 +174,7 @@ Entities:
       attackRange: 2.25
       attackDuration: 0.75
       attackDamageTime: 0.25
-      maxHealth: 80
+      maxHealth: 59
       logStateChanges: true
       hammerVisual: 11979571633178964622
       hitSfxPath1:
@@ -450,15 +450,17 @@ Entities:
       healSfx:
         uuid: 17698075993456772146
         path: assets/audio/sfx/Healing.ogg
-      healSfxVolume: 1
+      healSfxVolume: 0.3
       healEffectPrefab: 11988624165116550252
       healEffectLifetime: 0.5
       maxHealth: 30
       logStateChanges: true
       hitSfxPath1:
-        {}
+        uuid: 9101673412543458587
+        path: assets/audio/sfx/hit_1.ogg
       hitSfxPath2:
-        {}
+        uuid: 15814014518013310489
+        path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
       deathEffectPrefab: 1932126691914227009
   - Entity: 6992281311464379308

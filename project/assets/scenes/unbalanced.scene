@@ -194,7 +194,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 5871642760691059886
     Name: Red Brawler
     Tag: Red
@@ -602,7 +602,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 11680745888372737548
     Name: Right Hand Root
     Tag: ""
@@ -1081,7 +1081,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 6122322342925740066
     Name: Blue Mage
     Tag: Blue
@@ -1152,7 +1152,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 13465420385337184198
     Name: Blue Mage
     Tag: Blue
@@ -1223,7 +1223,7 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
   - Entity: 1675842212010099135
     Name: Blue Mage
     Tag: Blue
@@ -1294,4 +1294,4 @@ Entities:
         uuid: 15814014518013310489
         path: assets/audio/sfx/hit_2.ogg
       hitSfxVolume: 1
-      deathEffectPrefab: ~
+      deathEffectPrefab: 1932126691914227009
