@@ -1229,6 +1229,71 @@ Entities:
     Tag: Blue
     Canis::Transform:
       active: true
+      position: [-7.5, 1, 0]
+      rotation: [0, 0, 0]
+      scale: [1, 1, 1]
+      parent: 0
+      children:
+        []
+    Canis::Rigidbody:
+      active: true
+      motionType: 1
+      mass: 1
+      friction: 0.2
+      restitution: 0
+      linearDamping: 0.05
+      angularDamping: 0.05
+      useGravity: false
+      isSensor: false
+      layer: 2
+      mask: 21
+      allowSleeping: false
+      lockRotationX: false
+      lockRotationY: false
+      lockRotationZ: false
+      linearVelocity: [0, 0, 0]
+      angularVelocity: [0, 0, 0]
+    Canis::BoxCollider:
+      active: true
+      size: [1, 1, 1]
+    Canis::Material:
+      color: [0.23921569, 0.5803922, 0.98039216, 1]
+      MaterialAsset:
+        uuid: 17490362529814420531
+    Canis::Model:
+      color: [0.23921569, 0.5803922, 0.98039216, 1]
+      ModelAsset:
+        uuid: 17154083321347000101
+    AICombat::HealerStateMachine:
+      allyTag: Blue
+      targetTag: Red
+      detectionRange: 20
+      bodyColliderSize: [1, 1, 1]
+      moveSpeed: 3.5
+      followDistance: 2
+      healAmount: 2
+      healInterval: 1
+      healSfx:
+        uuid: 17698075993456772146
+        path: assets/audio/sfx/Healing.ogg
+      healSfxVolume: 1
+      healEffectPrefab: 11988624165116550252
+      healEffectLifetime: 0.5
+      maxHealth: 30
+      logStateChanges: true
+      hitSfxPath1:
+        uuid: 9101673412543458587
+        path: assets/audio/sfx/hit_1.ogg
+      hitSfxPath2:
+        uuid: 15814014518013310489
+        path: assets/audio/sfx/hit_2.ogg
+      hitSfxVolume: 1
+      deathEffectPrefab: 1932126691914227009
+  - Entity: 13387770205883405216
+    Name: Blue Mage
+    Tag: Blue
+    Canis::Transform:
+      active: true
       position: [-7.5, 1, 3]
       rotation: [0, 0, 0]
       scale: [1, 1, 1]
